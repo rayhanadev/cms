@@ -24,6 +24,9 @@ const generateURL: GenerateURL<SeoDoc> = ({ doc }) => {
 export const plugins: Plugin[] = [
   redirectsPlugin({
     collections: ['events', 'shelter', 'microgrants', 'hack-night-sessions'],
+    overrides: {
+      admin: { group: 'Meta' },
+    },
   }),
   seoPlugin({
     generateTitle,
@@ -31,6 +34,9 @@ export const plugins: Plugin[] = [
   }),
   searchPlugin({
     collections: ['events', 'shelter', 'microgrants', 'hack-night-sessions'],
+    searchOverrides: {
+      admin: { group: 'Meta' },
+    },
   }),
   sentryPlugin({
     Sentry,
