@@ -22,6 +22,16 @@ import { plugins } from './plugins'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+const allowedOrigins = [
+  'https://cms.purduehackers.com',
+  'https://events.purduehackers.com',
+  'http://localhost:4321',
+  process.env.VERCEL_PROJECT_PRODUCTION_URL &&
+    `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+  process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+  process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
+].filter((value): value is string => Boolean(value))
+
 function wrapAdapterWithSentry(adapter: EmailAdapter): EmailAdapter {
   return (...outerArgs) => {
     const instance = adapter(...outerArgs)
@@ -82,14 +92,6 @@ export default buildConfig({
       apiKey: process.env.RESEND_API_KEY || '',
     }),
   ),
-  cors: [
-    'https://cms.purduehackers.com',
-    'https://events.purduehackers.com',
-    'http://localhost:4321',
-  ],
-  csrf: [
-    'https://cms.purduehackers.com',
-    'https://events.purduehackers.com',
-    'http://localhost:4321',
-  ],
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
 })
