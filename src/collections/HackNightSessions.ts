@@ -9,8 +9,8 @@ export const HackNightSessions: CollectionConfig = {
     group: 'Hack Night',
   },
   access: {
-    read: hasAnyRoles('viewer', 'sessionsViewer'),
-    readVersions: hasAnyRoles('viewer', 'sessionsViewer'),
+    read: hasAnyRoles('viewer', 'hack_night_dashboard'),
+    readVersions: hasAnyRoles('viewer', 'hack_night_dashboard'),
     create: isEditor,
     update: isEditor,
     delete: isEditor,

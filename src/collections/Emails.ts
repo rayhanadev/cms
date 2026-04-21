@@ -10,8 +10,8 @@ export const Emails: CollectionConfig = {
     group: 'Events',
   },
   access: {
-    read: hasAnyRoles('viewer', 'eventsViewer'),
-    readVersions: hasAnyRoles('viewer', 'eventsViewer'),
+    read: hasAnyRoles('viewer', 'events_website'),
+    readVersions: hasAnyRoles('viewer', 'events_website'),
     create: isEditor,
     update: isEditor,
     delete: isEditor,

@@ -3,6 +3,10 @@ import { accessTrySequential, isEditor, isViewer } from './auth-utils'
 
 export const Shelter: CollectionConfig = {
   slug: 'shelter',
+  labels: {
+    singular: 'Shelter Project',
+    plural: 'Shelter Projects',
+  },
   admin: {
     useAsTitle: 'name',
     group: 'Shelter',

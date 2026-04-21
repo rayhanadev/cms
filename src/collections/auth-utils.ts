@@ -21,17 +21,17 @@ export const availableRoles = [
     label: 'Viewer',
   },
   {
-    value: 'sessionsViewer',
-    label: 'Viewer (sessions only)',
+    value: 'hack_night_dashboard',
+    label: 'Hack Night Dashboard (API)',
   },
   {
-    value: 'eventsViewer',
-    label: 'Viewer (events only)',
+    value: 'events_website',
+    label: 'Events Website (API)',
   },
   {
-    value: 'wackHacker',
+    value: 'wack_hacker',
     label: 'Wack Hacker (Bot)',
-  }
+  },
 ] as const satisfies Readonly<RoleDef[]>
 const availableRoleMap = Object.fromEntries(
   availableRoles.map((role) => [role.value, role]),

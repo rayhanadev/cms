@@ -9,13 +9,13 @@ export const Media: CollectionConfig = {
   access: {
     read: anyone,
     readVersions: isViewer,
-    create: hasAnyRoles('editor', 'wackHacker'),
+    create: hasAnyRoles('editor', 'wack_hacker'),
     update: isEditor,
     delete: (args) => {
       if (isEditor(args)) {
         return true
       }
-      if (hasAnyRoles('wackHacker')(args)) {
+      if (hasAnyRoles('wack_hacker')(args)) {
         return {
           source: {
             equals: 'hack-night',

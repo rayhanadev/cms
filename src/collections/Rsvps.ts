@@ -46,10 +46,10 @@ export const Rsvps: CollectionConfig = {
     group: 'Events',
   },
   access: {
-    read: hasAnyRoles('viewer', 'eventsViewer'),
-    readVersions: hasAnyRoles('viewer', 'eventsViewer'),
-    create: hasAnyRoles('editor', 'eventsViewer'),
-    update: hasAnyRoles('editor', 'eventsViewer'),
+    read: hasAnyRoles('viewer', 'events_website'),
+    readVersions: hasAnyRoles('viewer', 'events_website'),
+    create: hasAnyRoles('editor', 'events_website'),
+    update: hasAnyRoles('editor', 'events_website'),
     delete: isEditor,
   },
   fields: [

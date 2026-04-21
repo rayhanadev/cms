@@ -181,7 +181,7 @@ export interface PayloadMcpApiKeyAuthOperations {
  */
 export interface User {
   id: number;
-  roles: ('admin' | 'editor' | 'viewer' | 'sessionsViewer' | 'eventsViewer' | 'wackHacker')[];
+  roles: ('admin' | 'editor' | 'viewer' | 'hack_night_dashboard' | 'events_website' | 'wack_hacker')[];
   updatedAt: string;
   createdAt: string;
   enableAPIKey?: boolean | null;
@@ -217,7 +217,7 @@ export interface ServiceAccount {
    * Check to revoke the API key
    */
   revoked: boolean;
-  roles: ('admin' | 'editor' | 'viewer' | 'sessionsViewer' | 'eventsViewer' | 'wackHacker')[];
+  roles: ('admin' | 'editor' | 'viewer' | 'hack_night_dashboard' | 'events_website' | 'wack_hacker')[];
   updatedAt: string;
   createdAt: string;
   enableAPIKey?: boolean | null;
