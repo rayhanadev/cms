@@ -1,101 +1,95 @@
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
-import sharp from 'sharp'
+import { sqliteAdapter } from '@payloadcms/db-sqlite'
+import { resendAdapter } from '@payloadcms/email-resend'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+import * as Sentry from '@sentry/nextjs'
 import path from 'path'
-import { buildConfig, PayloadRequest } from 'payload'
+import { buildConfig, type EmailAdapter } from 'payload'
+import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
-import { Categories } from './collections/Categories'
+import { Emails } from './collections/Emails'
+import { Events } from './collections/Events'
+import { HackNightSessions } from './collections/HackNightSessions'
 import { Media } from './collections/Media'
-import { Pages } from './collections/Pages'
-import { Posts } from './collections/Posts'
+import { Microgrants } from './collections/Microgrants'
+import { Rsvps } from './collections/Rsvps'
+import { ServiceAccounts } from './collections/ServiceAccounts'
+import { Shelter } from './collections/Shelter'
 import { Users } from './collections/Users'
-import { Footer } from './Footer/config'
-import { Header } from './Header/config'
 import { plugins } from './plugins'
-import { defaultLexical } from '@/fields/defaultLexical'
-import { getServerSideURL } from './utilities/getURL'
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+function wrapAdapterWithSentry(adapter: EmailAdapter): EmailAdapter {
+  return (...outerArgs) => {
+    const instance = adapter(...outerArgs)
+    return {
+      ...instance,
+      sendEmail: (...innerArgs) =>
+        instance.sendEmail(...innerArgs).catch((error) => {
+          Sentry.captureException(error)
+          throw error
+        }),
+    }
+  }
+}
+
 export default buildConfig({
+  serverURL: 'https://cms.purduehackers.com',
   admin: {
-    components: {
-      // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
-      beforeLogin: ['@/components/BeforeLogin'],
-      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/components/BeforeDashboard'],
-    },
+    user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
     },
-    user: Users.slug,
-    livePreview: {
-      breakpoints: [
-        {
-          label: 'Mobile',
-          name: 'mobile',
-          width: 375,
-          height: 667,
-        },
-        {
-          label: 'Tablet',
-          name: 'tablet',
-          width: 768,
-          height: 1024,
-        },
-        {
-          label: 'Desktop',
-          name: 'desktop',
-          width: 1440,
-          height: 900,
-        },
-      ],
-    },
   },
-  // This config helps us configure global or default features that the other editors can inherit
-  editor: defaultLexical,
-  db: vercelPostgresAdapter({
-    pool: {
-      connectionString: process.env.POSTGRES_URL || '',
-    },
-  }),
-  collections: [Pages, Posts, Media, Categories, Users],
-  cors: [getServerSideURL()].filter(Boolean),
-  plugins: [
-    ...plugins,
-    vercelBlobStorage({
-      collections: {
-        media: true,
-      },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
-    }),
+  collections: [
+    Users,
+    ServiceAccounts,
+    Media,
+    Events,
+    Emails,
+    Rsvps,
+    HackNightSessions,
+    Shelter,
+    Microgrants,
   ],
-  globals: [Header, Footer],
-  secret: process.env.PAYLOAD_SECRET,
+  editor: lexicalEditor(),
+  secret: process.env.PAYLOAD_SECRET || '',
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  jobs: {
-    access: {
-      run: ({ req }: { req: PayloadRequest }): boolean => {
-        // Allow logged in users to execute this endpoint (default)
-        if (req.user) return true
-
-        const secret = process.env.CRON_SECRET
-        if (!secret) return false
-
-        // If there is no logged in user, then check
-        // for the Vercel Cron secret to be present as an
-        // Authorization header:
-        const authHeader = req.headers.get('authorization')
-        return authHeader === `Bearer ${secret}`
-      },
+  db: sqliteAdapter({
+    client: {
+      url: process.env.TURSO_DATABASE_URL || '',
+      authToken: process.env.TURSO_AUTH_TOKEN,
     },
-    tasks: [],
-  },
+    push: false,
+  }),
+  plugins: [
+    ...plugins,
+    vercelBlobStorage({
+      collections: { media: true },
+      token: process.env.BLOB_READ_WRITE_TOKEN || '',
+    }),
+  ],
+  email: wrapAdapterWithSentry(
+    resendAdapter({
+      defaultFromAddress: 'events@purduehackers.com',
+      defaultFromName: 'Purdue Hackers',
+      apiKey: process.env.RESEND_API_KEY || '',
+    }),
+  ),
+  cors: [
+    'https://cms.purduehackers.com',
+    'https://events.purduehackers.com',
+    'http://localhost:4321',
+  ],
+  csrf: [
+    'https://cms.purduehackers.com',
+    'https://events.purduehackers.com',
+    'http://localhost:4321',
+  ],
 })

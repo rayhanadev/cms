@@ -1,92 +1,50 @@
-import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
-import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
+import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
-import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
-import { Plugin } from 'payload'
-import { revalidateRedirects } from '@/hooks/revalidateRedirects'
-import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
-import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
-import { searchFields } from '@/search/fieldOverrides'
-import { beforeSyncWithSearch } from '@/search/beforeSync'
+import { sentryPlugin } from '@payloadcms/plugin-sentry'
+import { seoPlugin } from '@payloadcms/plugin-seo'
+import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
+import * as Sentry from '@sentry/nextjs'
+import type { Plugin } from 'payload'
 
-import { Page, Post } from '@/payload-types'
-import { getServerSideURL } from '@/utilities/getURL'
+import type { Event, HackNightSession, Microgrant, Shelter } from '@/payload-types'
 
-const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
+type SeoDoc = Event | HackNightSession | Shelter | Microgrant
+
+const generateTitle: GenerateTitle<SeoDoc> = ({ doc }) => {
+  const title = 'name' in doc && doc.name ? doc.name : 'title' in doc ? doc.title : undefined
+  return title ? `${title} | Purdue Hackers` : 'Purdue Hackers CMS'
 }
 
-const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
-  const url = getServerSideURL()
-
-  return doc?.slug ? `${url}/${doc.slug}` : url
+const generateURL: GenerateURL<SeoDoc> = ({ doc }) => {
+  const base = 'https://cms.purduehackers.com'
+  return doc?.id ? `${base}/admin/collections/${doc.id}` : base
 }
 
 export const plugins: Plugin[] = [
   redirectsPlugin({
-    collections: ['pages', 'posts'],
-    overrides: {
-      // @ts-expect-error - This is a valid override, mapped fields don't resolve to the same type
-      fields: ({ defaultFields }) => {
-        return defaultFields.map((field) => {
-          if ('name' in field && field.name === 'from') {
-            return {
-              ...field,
-              admin: {
-                description: 'You will need to rebuild the website when changing this field.',
-              },
-            }
-          }
-          return field
-        })
-      },
-      hooks: {
-        afterChange: [revalidateRedirects],
-      },
-    },
-  }),
-  nestedDocsPlugin({
-    collections: ['categories'],
-    generateURL: (docs) => docs.reduce((url, doc) => `${url}/${doc.slug}`, ''),
+    collections: ['events', 'shelter', 'microgrants', 'hack-night-sessions'],
   }),
   seoPlugin({
     generateTitle,
     generateURL,
   }),
-  formBuilderPlugin({
-    fields: {
-      payment: false,
-    },
-    formOverrides: {
-      fields: ({ defaultFields }) => {
-        return defaultFields.map((field) => {
-          if ('name' in field && field.name === 'confirmationMessage') {
-            return {
-              ...field,
-              editor: lexicalEditor({
-                features: ({ rootFeatures }) => {
-                  return [
-                    ...rootFeatures,
-                    FixedToolbarFeature(),
-                    HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-                  ]
-                },
-              }),
-            }
-          }
-          return field
-        })
-      },
+  searchPlugin({
+    collections: ['events', 'shelter', 'microgrants', 'hack-night-sessions'],
+  }),
+  sentryPlugin({
+    Sentry,
+    options: {
+      captureErrors: [400, 403, 500],
     },
   }),
-  searchPlugin({
-    collections: ['posts'],
-    beforeSync: beforeSyncWithSearch,
-    searchOverrides: {
-      fields: ({ defaultFields }) => {
-        return [...defaultFields, ...searchFields]
-      },
+  mcpPlugin({
+    collections: {
+      events: { enabled: { find: true } },
+      rsvps: { enabled: { find: true } },
+      'hack-night-sessions': { enabled: { find: true } },
+      shelter: { enabled: { find: true } },
+      microgrants: { enabled: { find: true } },
     },
   }),
 ]
