@@ -4,7 +4,7 @@ import { anyone, hasAnyRoles, isEditor, isViewer, loggedIn } from './auth-utils'
 export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
-    group: 'Meta',
+    group: 'Assets',
   },
   access: {
     read: anyone,
