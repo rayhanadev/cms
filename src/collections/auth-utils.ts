@@ -87,9 +87,23 @@ export const loggedIn: Access & FieldAccess = ({ req: { user } }) =>
  */
 export function hasAllRoles(...roles: Role[]): Access & FieldAccess {
   return ({ req: { user } }) => {
-    if (!isRoleBearing(user) || isRevoked(user)) return false
+    const debug = {
+      required: roles,
+      hasUser: Boolean(user),
+      collection: user?.collection,
+      userId: user?.id,
+      userRoles: (user as { roles?: unknown })?.roles,
+      isRoleBearing: isRoleBearing(user),
+      isRevoked: isRevoked(user),
+    }
+    if (!isRoleBearing(user) || isRevoked(user)) {
+      console.log('[hasAllRoles DENY]', debug)
+      return false
+    }
     const set = new Set(user.roles)
-    return roles.every((role) => set.has(role))
+    const result = roles.every((role) => set.has(role))
+    if (!result) console.log('[hasAllRoles DENY]', debug)
+    return result
   }
 }
 
